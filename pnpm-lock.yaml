@@ -1,0 +1,33 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    devDependencies:
+      '@aqutter/aqutter':
+        specifier: github:Aqutter/aqutter#0.2.0&path:/client
+        version: https://codeload.github.com/Aqutter/aqutter/tar.gz/ffeebe9a6f802e1d8831dd959d0691f7943a675b#path:/client
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
+packages:
+
+  '@aqutter/aqutter@https://codeload.github.com/Aqutter/aqutter/tar.gz/ffeebe9a6f802e1d8831dd959d0691f7943a675b#path:/client':
+    resolution: {gitHosted: true, integrity: sha512-AGU8OjFo7971KYd/Z1r0eeB8zfjhsmXn3aHUNk2YSzt9y4DXDCPY4BF5my3HfVOi2GHK0dtTkOyZph6VBrb3dA==, path: /client, tarball: https://codeload.github.com/Aqutter/aqutter/tar.gz/ffeebe9a6f802e1d8831dd959d0691f7943a675b}
+    version: 0.2.0
+
+  typescript@5.9.3:
+    resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
+snapshots:
+
+  '@aqutter/aqutter@https://codeload.github.com/Aqutter/aqutter/tar.gz/ffeebe9a6f802e1d8831dd959d0691f7943a675b#path:/client': {}
+
+  typescript@5.9.3: {}
