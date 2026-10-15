@@ -16,7 +16,7 @@ dependencies:
     git:
       url: https://github.com/Aqutter/aqutter.git
       path: shell
-      ref: 0.2.0
+      ref: 0.2.1
 
   # 需要原生能力時，在這裡加上既有的 Flutter plugin（例如 battery_plus）；
   # 其原生部分由 Flutter 工具鏈在 App 建置時自動整合，不需要額外設定。
