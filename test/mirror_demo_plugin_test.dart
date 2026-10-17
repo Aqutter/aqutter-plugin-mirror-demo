@@ -10,7 +10,7 @@ void main() {
     expect(MirrorDemoPlugin().id, 'mirror-demo');
   });
 
-  test('tap counts, doubleTap resets, and the count event fires', () {
+  test('every tap counts and doubleTap resets', () {
     final state = MirrorDemoState();
     final counts = <int>[];
     state.onCountChanged = counts.add;

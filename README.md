@@ -31,7 +31,7 @@ const { x, y, radius } = await mirrorDemo.state()
 | `pan` | 拖動圓 |
 | `pinch` | 縮放圓 |
 | `tap` | 計數 +1（並派送 `count` 事件） |
-| `doubleTap` | 計數歸零 |
+| `doubleTap` | 計數歸零（第二下先計數再歸零） |
 | `longPress` | 換色 |
 | `command` `reset` | 回到初始狀態 |
 
