@@ -74,7 +74,7 @@ flutter pub get && flutter test
 | `input` | 網頁送什麼 | 誰判斷手勢 |
 |---|---|---|
 | `gestures`（預設） | 判斷好的 tap／doubleTap／longPress／pan／pinch | 網頁 |
-| `pointers` | 原始指標事件（down／move／up／cancel，附時間戳） | Flutter（標準的 `GestureDetector`） |
+| `pointers` | 原始指標事件（down／move／up／cancel，附時間戳） | Flutter（標準的 `GestureDetector`：單擊、雙擊、長按、右鍵、單指拖曳、雙指縮放與旋轉、慣性滑動） |
 | `both` | 兩者都送 | 兩邊都判斷，通常用不到 |
 
-本範例兩種都支援。用 `pointers` 時，Flutter 的 `onTap` 在同時註冊 `onDoubleTap` 的情況下會等約 300 ms 確認不是雙擊才觸發。本範例因此用 `Listener` 在放開的瞬間立即計數單擊，雙擊仍交給 `GestureDetector.onDoubleTap`（單擊到畫面更新約 50 到 70 ms）。
+本範例兩種都支援。用 `pointers` 時是 Flutter 標準行為：同時註冊 `onTap` 與 `onDoubleTap`，單擊要等約 300 ms 確認不是雙擊才觸發，雙擊不會再觸發單擊（互斥）。畫布見 `MirrorDemoCanvas`。

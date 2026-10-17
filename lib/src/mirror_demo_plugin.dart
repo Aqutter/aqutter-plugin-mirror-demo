@@ -1,8 +1,8 @@
 import 'dart:math' as math;
 
 import 'package:aqutter/aqutter.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 /// native view 鏡像範例：一個純 Flutter 的互動畫面（圓、計數、色票），墊在 WebView 之下，
 /// 以 `AqutterNative` 鏡像到網頁的 `<aqutter-native session="mirror-demo">`。
@@ -51,7 +51,7 @@ class MirrorDemoPlugin extends AqutterPlugin {
         matchViewportAspect: true,
         injectPointers: true, // 網頁 input="pointers" 時，由下面的 GestureDetector 自己判斷手勢
         onMessage: state.apply,
-        child: _DemoCanvas(state: state),
+        child: MirrorDemoCanvas(state: state),
       ),
     );
   }
@@ -69,14 +69,37 @@ class MirrorDemoState extends ChangeNotifier {
   /// 圓心位置與大小，皆為 0..1 的正規化值（相對畫面）。
   Offset center = const Offset(0.5, 0.5);
   double radius = 0.18;
+
+  /// 旋轉角（弧度）；只有兩指旋轉（Flutter 標準手勢）會改變，語意手勢模式沒有旋轉。
+  double rotation = 0;
   int count = 0;
   int colorIndex = 0;
 
   double _radiusAtPinchStart = 0.18;
+  double _rotationAtScaleStart = 0;
 
   void Function(int count)? onCountChanged;
 
   Color get color => palette[colorIndex % palette.length];
+
+  /// 以正規化位移移動圓心（拖曳、慣性滑動用）。
+  void moveBy(Offset delta) {
+    center = Offset((center.dx + delta.dx).clamp(0.0, 1.0), (center.dy + delta.dy).clamp(0.0, 1.0));
+    notifyListeners();
+  }
+
+  /// 開始一次縮放／旋轉手勢：記下目前的大小與角度，之後的倍率與旋轉量都相對於它。
+  void beginScale() {
+    _radiusAtPinchStart = radius;
+    _rotationAtScaleStart = rotation;
+  }
+
+  /// 套用相對於 [beginScale] 的累計倍率與旋轉量（弧度）。
+  void scaleTo(double scale, double rotationDelta) {
+    radius = (_radiusAtPinchStart * scale).clamp(0.05, 0.45);
+    rotation = _rotationAtScaleStart + rotationDelta;
+    notifyListeners();
+  }
 
   void apply(AqutterNativeMessage message) {
     switch (message.type) {
@@ -107,6 +130,7 @@ class MirrorDemoState extends ChangeNotifier {
         if (message.data['name'] == 'reset') {
           center = const Offset(0.5, 0.5);
           radius = 0.18;
+          rotation = 0;
           count = 0;
           colorIndex = 0;
           onCountChanged?.call(count);
@@ -125,23 +149,68 @@ class MirrorDemoState extends ChangeNotifier {
       };
 }
 
-class _DemoCanvas extends StatefulWidget {
-  const _DemoCanvas({required this.state});
+/// 畫布。網頁 `input="gestures"` 時網頁判斷手勢、經 [MirrorDemoState.apply] 套用；
+/// 網頁 `input="pointers"` 時，原始指標事件被注入這個 widget，由下面標準的 Flutter 手勢處理：
+/// 單擊、雙擊（與單擊互斥）、長按、右鍵，以及單指拖曳、雙指縮放與旋轉（含多指）、放開後的慣性滑動。
+class MirrorDemoCanvas extends StatefulWidget {
+  const MirrorDemoCanvas({super.key, required this.state});
 
   final MirrorDemoState state;
 
   @override
-  State<_DemoCanvas> createState() => _DemoCanvasState();
+  State<MirrorDemoCanvas> createState() => _MirrorDemoCanvasState();
 }
 
-class _DemoCanvasState extends State<_DemoCanvas> {
+class _MirrorDemoCanvasState extends State<MirrorDemoCanvas> with SingleTickerProviderStateMixin {
   MirrorDemoState get state => widget.state;
 
-  /// 目前這一下按下的位置與時間（單擊判斷用）。
-  Offset? _tapDown;
-  Duration? _tapDownAt;
+  late final Ticker _ticker = createTicker(_onTick);
+  Duration _lastTick = Duration.zero;
 
-  static AqutterNativeMessage _message(String type, [Map<String, dynamic> data = const {}]) => AqutterNativeMessage(type, data);
+  /// 慣性滑動的速度（每秒的正規化位移），每個 tick 以摩擦力衰減。
+  Offset _velocity = Offset.zero;
+  Size _size = Size.zero;
+
+  static AqutterNativeMessage _message(String type) => AqutterNativeMessage(type, const {});
+
+  @override
+  void dispose() {
+    _ticker.dispose();
+    super.dispose();
+  }
+
+  void _stopFling() {
+    _velocity = Offset.zero;
+    if (_ticker.isActive) {
+      _ticker.stop();
+    }
+  }
+
+  void _onTick(Duration elapsed) {
+    final dt = (elapsed - _lastTick).inMicroseconds / Duration.microsecondsPerSecond;
+    _lastTick = elapsed;
+    if (dt <= 0) {
+      return;
+    }
+    state.moveBy(_velocity * dt);
+    _velocity *= math.exp(-4 * dt);
+    if (_velocity.distance < 0.02) {
+      _ticker.stop();
+    }
+  }
+
+  void _startFling(Velocity velocity) {
+    if (_size.isEmpty) {
+      return;
+    }
+    final normalized = Offset(velocity.pixelsPerSecond.dx / _size.width, velocity.pixelsPerSecond.dy / _size.height);
+    if (normalized.distance < 0.3) {
+      return;
+    }
+    _velocity = normalized;
+    _lastTick = Duration.zero;
+    _ticker.start();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -152,51 +221,38 @@ class _DemoCanvasState extends State<_DemoCanvas> {
         child: const SizedBox.expand(),
       ),
     );
-    // 原始指標事件模式下由 Flutter 判斷手勢；語意手勢模式沒有指標事件進來，這層不會觸發。
-    //
-    // 單擊刻意不用 GestureDetector.onTap：同時註冊 onDoubleTap 時，Flutter 要等約 300 ms 確認不是雙擊才會觸發 onTap，
-    // 計數就有明顯延遲。這裡用 Listener 在放開的瞬間立刻 +1（Listener 不進手勢競技場，不會被壓住），
-    // 雙擊仍交給 GestureDetector.onDoubleTap（第二下放開時觸發，沒有額外等待）。
     return LayoutBuilder(
-      builder: (context, constraints) => Listener(
-        behavior: HitTestBehavior.opaque,
-        onPointerDown: (event) {
-          _tapDown = event.position;
-          _tapDownAt = event.timeStamp;
-        },
-        onPointerUp: (event) {
-          final down = _tapDown;
-          final at = _tapDownAt;
-          _tapDown = null;
-          if (down != null && at != null && (event.position - down).distance < kTouchSlop && event.timeStamp - at < kLongPressTimeout) {
-            state.apply(_message('tap'));
-          }
-        },
-        onPointerCancel: (_) => _tapDown = null,
-        child: GestureDetector(
+      builder: (context, constraints) {
+        _size = constraints.biggest;
+        return GestureDetector(
           behavior: HitTestBehavior.opaque,
+          // 標準行為：同時註冊 onTap 與 onDoubleTap 時，單擊要等約 300 ms 確認不是雙擊才觸發，雙擊不會再觸發單擊
+          onTap: () => state.apply(_message('tap')),
           onDoubleTap: () => state.apply(_message('doubleTap')),
           onLongPress: () => state.apply(_message('longPress')),
+          onSecondaryTap: () => state.apply(_message('longPress')),
           onScaleStart: (details) {
-            if (details.pointerCount >= 2) {
-              state.apply(_message('pinch', {'phase': 'start'}));
-            }
+            _stopFling();
+            state.beginScale();
           },
           onScaleUpdate: (details) {
-            if (details.pointerCount >= 2) {
-              state.apply(_message('pinch', {'phase': 'update', 'scale': details.scale}));
+            if (_size.isEmpty) {
+              return;
             }
-            else {
-              state.apply(_message('pan', {
-                'phase': 'update',
-                'dx': constraints.maxWidth > 0 ? details.focalPointDelta.dx / constraints.maxWidth : 0,
-                'dy': constraints.maxHeight > 0 ? details.focalPointDelta.dy / constraints.maxHeight : 0,
-              }));
+            // 多指時焦點會跟著手指中心移動，所以兩指縮放的同時也能平移
+            state.moveBy(Offset(details.focalPointDelta.dx / _size.width, details.focalPointDelta.dy / _size.height));
+            if (details.pointerCount >= 2) {
+              state.scaleTo(details.scale, details.rotation);
+            }
+          },
+          onScaleEnd: (details) {
+            if (details.pointerCount == 0) {
+              _startFling(details.velocity);
             }
           },
           child: canvas,
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -219,6 +275,12 @@ class _DemoPainter extends CustomPainter {
     final center = Offset(state.center.dx * size.width, state.center.dy * size.height);
     final radius = state.radius * math.min(size.width, size.height);
     canvas.drawCircle(center, radius, Paint()..color = state.color);
+    // 旋轉指示點：兩指旋轉時繞著圓緣移動
+    canvas.drawCircle(
+      center + Offset(math.cos(state.rotation), math.sin(state.rotation)) * radius * 0.8,
+      radius * 0.09,
+      Paint()..color = Colors.white,
+    );
     final text = TextPainter(
       text: TextSpan(
         text: '${state.count}',
