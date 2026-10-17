@@ -43,6 +43,7 @@ class MirrorDemoPlugin extends AqutterPlugin {
         sessionId: 'mirror-demo',
         fps: fps,
         adaptive: adaptive,
+        matchViewportAspect: true,
         onMessage: state.apply,
         child: _DemoCanvas(state: state),
       ),
