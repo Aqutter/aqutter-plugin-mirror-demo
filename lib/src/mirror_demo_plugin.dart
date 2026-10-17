@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:aqutter/aqutter.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 /// native view 鏡像範例：一個純 Flutter 的互動畫面（圓、計數、色票），墊在 WebView 之下，
@@ -124,10 +125,21 @@ class MirrorDemoState extends ChangeNotifier {
       };
 }
 
-class _DemoCanvas extends StatelessWidget {
+class _DemoCanvas extends StatefulWidget {
   const _DemoCanvas({required this.state});
 
   final MirrorDemoState state;
+
+  @override
+  State<_DemoCanvas> createState() => _DemoCanvasState();
+}
+
+class _DemoCanvasState extends State<_DemoCanvas> {
+  MirrorDemoState get state => widget.state;
+
+  /// 目前這一下按下的位置與時間（單擊判斷用）。
+  Offset? _tapDown;
+  Duration? _tapDownAt;
 
   static AqutterNativeMessage _message(String type, [Map<String, dynamic> data = const {}]) => AqutterNativeMessage(type, data);
 
@@ -141,30 +153,49 @@ class _DemoCanvas extends StatelessWidget {
       ),
     );
     // 原始指標事件模式下由 Flutter 判斷手勢；語意手勢模式沒有指標事件進來，這層不會觸發。
+    //
+    // 單擊刻意不用 GestureDetector.onTap：同時註冊 onDoubleTap 時，Flutter 要等約 300 ms 確認不是雙擊才會觸發 onTap，
+    // 計數就有明顯延遲。這裡用 Listener 在放開的瞬間立刻 +1（Listener 不進手勢競技場，不會被壓住），
+    // 雙擊仍交給 GestureDetector.onDoubleTap（第二下放開時觸發，沒有額外等待）。
     return LayoutBuilder(
-      builder: (context, constraints) => GestureDetector(
+      builder: (context, constraints) => Listener(
         behavior: HitTestBehavior.opaque,
-        onTap: () => state.apply(_message('tap')),
-        onDoubleTap: () => state.apply(_message('doubleTap')),
-        onLongPress: () => state.apply(_message('longPress')),
-        onScaleStart: (details) {
-          if (details.pointerCount >= 2) {
-            state.apply(_message('pinch', {'phase': 'start'}));
+        onPointerDown: (event) {
+          _tapDown = event.position;
+          _tapDownAt = event.timeStamp;
+        },
+        onPointerUp: (event) {
+          final down = _tapDown;
+          final at = _tapDownAt;
+          _tapDown = null;
+          if (down != null && at != null && (event.position - down).distance < kTouchSlop && event.timeStamp - at < kLongPressTimeout) {
+            state.apply(_message('tap'));
           }
         },
-        onScaleUpdate: (details) {
-          if (details.pointerCount >= 2) {
-            state.apply(_message('pinch', {'phase': 'update', 'scale': details.scale}));
-          }
-          else {
-            state.apply(_message('pan', {
-              'phase': 'update',
-              'dx': constraints.maxWidth > 0 ? details.focalPointDelta.dx / constraints.maxWidth : 0,
-              'dy': constraints.maxHeight > 0 ? details.focalPointDelta.dy / constraints.maxHeight : 0,
-            }));
-          }
-        },
-        child: canvas,
+        onPointerCancel: (_) => _tapDown = null,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onDoubleTap: () => state.apply(_message('doubleTap')),
+          onLongPress: () => state.apply(_message('longPress')),
+          onScaleStart: (details) {
+            if (details.pointerCount >= 2) {
+              state.apply(_message('pinch', {'phase': 'start'}));
+            }
+          },
+          onScaleUpdate: (details) {
+            if (details.pointerCount >= 2) {
+              state.apply(_message('pinch', {'phase': 'update', 'scale': details.scale}));
+            }
+            else {
+              state.apply(_message('pan', {
+                'phase': 'update',
+                'dx': constraints.maxWidth > 0 ? details.focalPointDelta.dx / constraints.maxWidth : 0,
+                'dy': constraints.maxHeight > 0 ? details.focalPointDelta.dy / constraints.maxHeight : 0,
+              }));
+            }
+          },
+          child: canvas,
+        ),
       ),
     );
   }

@@ -77,4 +77,4 @@ flutter pub get && flutter test
 | `pointers` | 原始指標事件（down／move／up／cancel，附時間戳） | Flutter（標準的 `GestureDetector`） |
 | `both` | 兩者都送 | 兩邊都判斷，通常用不到 |
 
-本範例兩種都支援。用 `pointers` 時，Flutter 的 `onTap` 在同時註冊 `onDoubleTap` 的情況下會等約 300 ms 確認不是雙擊才觸發，這是 Flutter 的標準行為。
+本範例兩種都支援。用 `pointers` 時，Flutter 的 `onTap` 在同時註冊 `onDoubleTap` 的情況下會等約 300 ms 確認不是雙擊才觸發。本範例因此用 `Listener` 在放開的瞬間立即計數單擊，雙擊仍交給 `GestureDetector.onDoubleTap`（單擊到畫面更新約 50 到 70 ms）。
