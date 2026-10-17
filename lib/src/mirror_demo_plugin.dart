@@ -12,6 +12,11 @@ import 'package:flutter/material.dart';
 ///
 /// 鏡像的對象換成 `google_maps_flutter` 的 `GoogleMap` 也是同一套寫法，見 README。
 class MirrorDemoPlugin extends AqutterPlugin {
+  MirrorDemoPlugin({this.fps = 30});
+
+  /// 鏡像的目標幀率；效能量測時可調高。
+  final int fps;
+
   final MirrorDemoState state = MirrorDemoState();
 
   @override
@@ -33,7 +38,7 @@ class MirrorDemoPlugin extends AqutterPlugin {
     return Positioned.fill(
       child: AqutterNative(
         sessionId: 'mirror-demo',
-        fps: 30,
+        fps: fps,
         onMessage: state.apply,
         child: _DemoCanvas(state: state),
       ),
