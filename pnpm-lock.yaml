@@ -9,17 +9,17 @@ importers:
   .:
     devDependencies:
       '@aqutter/aqutter':
-        specifier: github:Aqutter/aqutter#0.2.1&path:/client
-        version: https://codeload.github.com/Aqutter/aqutter/tar.gz/7297bd269e4d5c047a2be6bc82187e20b0abb7fd#path:/client
+        specifier: github:Aqutter/aqutter#0.0.0&path:/client
+        version: https://codeload.github.com/Aqutter/aqutter/tar.gz/ef80afd1a6df9793c3fb53eae06572485ce29f81#path:/client
       typescript:
         specifier: ^5.7.0
         version: 5.9.3
 
 packages:
 
-  '@aqutter/aqutter@https://codeload.github.com/Aqutter/aqutter/tar.gz/7297bd269e4d5c047a2be6bc82187e20b0abb7fd#path:/client':
-    resolution: {gitHosted: true, path: /client, tarball: https://codeload.github.com/Aqutter/aqutter/tar.gz/7297bd269e4d5c047a2be6bc82187e20b0abb7fd}
-    version: 0.2.1
+  '@aqutter/aqutter@https://codeload.github.com/Aqutter/aqutter/tar.gz/ef80afd1a6df9793c3fb53eae06572485ce29f81#path:/client':
+    resolution: {gitHosted: true, path: /client, tarball: https://codeload.github.com/Aqutter/aqutter/tar.gz/ef80afd1a6df9793c3fb53eae06572485ce29f81}
+    version: 0.0.0
 
   typescript@5.9.3:
     resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
@@ -28,6 +28,6 @@ packages:
 
 snapshots:
 
-  '@aqutter/aqutter@https://codeload.github.com/Aqutter/aqutter/tar.gz/7297bd269e4d5c047a2be6bc82187e20b0abb7fd#path:/client': {}
+  '@aqutter/aqutter@https://codeload.github.com/Aqutter/aqutter/tar.gz/ef80afd1a6df9793c3fb53eae06572485ce29f81#path:/client': {}
 
   typescript@5.9.3: {}

@@ -4,7 +4,7 @@ import 'package:aqutter/aqutter.dart';
 import 'package:flutter/material.dart';
 
 /// native view 鏡像範例：一個純 Flutter 的互動畫面（圓、計數、色票），墊在 WebView 之下，
-/// 以 `AqutterMirror` 鏡像到網頁的 `<aqutter-native session="mirror-demo">`。
+/// 以 `AqutterNative` 鏡像到網頁的 `<aqutter-native session="mirror-demo">`。
 ///
 /// 網頁端的手勢回到這裡改變畫面：
 ///   - `pan`：拖動圓　`pinch`：縮放圓　`tap`：計數 +1　`doubleTap`：歸零
@@ -31,7 +31,7 @@ class MirrorDemoPlugin extends AqutterPlugin {
   @override
   Widget? buildUnderlay(BuildContext context) {
     return Positioned.fill(
-      child: AqutterMirror(
+      child: AqutterNative(
         sessionId: 'mirror-demo',
         fps: 30,
         onMessage: state.apply,
@@ -62,7 +62,7 @@ class MirrorDemoState extends ChangeNotifier {
 
   Color get color => palette[colorIndex % palette.length];
 
-  void apply(AqutterMirrorMessage message) {
+  void apply(AqutterNativeMessage message) {
     switch (message.type) {
       case 'pan':
         if (message.data['phase'] == 'update') {

@@ -1,6 +1,6 @@
 # aqutter-plugin-mirror-demo
 
-Aqutter plugin 範例：**native view 鏡像**。一個純 Flutter 的互動畫面（圓、計數、色票）墊在 WebView 之下，以 `AqutterMirror` 即時鏡像到網頁的 `<aqutter-native>` canvas；網頁在其上疊 HTML，並把手勢回傳給原生畫面。
+Aqutter plugin 範例：**native view 鏡像**。一個純 Flutter 的互動畫面（圓、計數、色票）墊在 WebView 之下，以 `AqutterNative` 即時鏡像到網頁的 `<aqutter-native>` canvas；網頁在其上疊 HTML，並把手勢回傳給原生畫面。
 
 ## 安裝
 
@@ -9,7 +9,7 @@ aqutter plugin add github:Aqutter/aqutter-plugin-mirror-demo
 cd aqutter && flutter pub get
 ```
 
-需要與 App 相同的殼版本（`aqutter` 的 git ref 為 `0.2.1`）。
+需要與 App 相同的殼版本（`aqutter` 的 git ref 為 `0.0.0`）。
 
 ## 使用
 
@@ -40,7 +40,7 @@ const { x, y, radius } = await mirrorDemo.state()
 把 `child` 換成 `GoogleMap`，停用它自己的手勢，在 `onMessage` 用 `GoogleMapController` 套用手勢：
 
 ```dart
-AqutterMirror(
+AqutterNative(
   sessionId: 'map',
   nativeCapture: true,                  // iOS：PlatformView 需原生擷取
   nativeViewTypeContains: 'GMSMapView', // 直接擷取地圖 view（不含疊在其上的網頁）

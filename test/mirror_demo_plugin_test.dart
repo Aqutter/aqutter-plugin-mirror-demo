@@ -2,8 +2,8 @@ import 'package:aqutter/aqutter.dart';
 import 'package:aqutter_plugin_mirror_demo/aqutter_plugin_mirror_demo.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-AqutterMirrorMessage message(String type, [Map<String, dynamic> data = const {}]) =>
-    AqutterMirrorMessage(type, {'type': type, ...data});
+AqutterNativeMessage message(String type, [Map<String, dynamic> data = const {}]) =>
+    AqutterNativeMessage(type, {'type': type, ...data});
 
 void main() {
   test('id follows the naming rule', () {

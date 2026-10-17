@@ -17,7 +17,7 @@ declare module '@aqutter/aqutter' {
   }
 }
 
-/** 與 Dart 端 `AqutterMirror.sessionId` 一致。 */
+/** 與 Dart 端 `AqutterNative.sessionId` 一致。 */
 export const MIRROR_DEMO_SESSION = 'mirror-demo'
 
 /** 網頁端 API。 */
