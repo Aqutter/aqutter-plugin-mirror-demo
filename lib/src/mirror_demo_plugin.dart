@@ -6,6 +6,10 @@ import 'package:flutter/material.dart';
 /// native view 鏡像範例：一個純 Flutter 的互動畫面（圓、計數、色票），墊在 WebView 之下，
 /// 以 `AqutterNative` 鏡像到網頁的 `<aqutter-native session="mirror-demo">`。
 ///
+/// 輸入有兩種接法（網頁 `<aqutter-native input="…">`）：
+///   - `gestures`（預設）：網頁判斷好 tap／pan／pinch 再傳來，由 [MirrorDemoState.apply] 套用。
+///   - `pointers`：網頁只轉送原始指標事件，由畫面上的 `GestureDetector` 判斷（連點、長按、縮放都是 Flutter 的標準行為）。
+///
 /// 網頁端的手勢回到這裡改變畫面：
 ///   - `pan`：拖動圓　`pinch`：縮放圓　`tap`：計數 +1　`doubleTap`：歸零
 ///   - `longPress`：換色　`command` `reset`：回到初始狀態
@@ -44,6 +48,7 @@ class MirrorDemoPlugin extends AqutterPlugin {
         fps: fps,
         adaptive: adaptive,
         matchViewportAspect: true,
+        injectPointers: true, // 網頁 input="pointers" 時，由下面的 GestureDetector 自己判斷手勢
         onMessage: state.apply,
         child: _DemoCanvas(state: state),
       ),
@@ -124,13 +129,42 @@ class _DemoCanvas extends StatelessWidget {
 
   final MirrorDemoState state;
 
+  static AqutterNativeMessage _message(String type, [Map<String, dynamic> data = const {}]) => AqutterNativeMessage(type, data);
+
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
+    final canvas = ListenableBuilder(
       listenable: state,
       builder: (context, _) => CustomPaint(
         painter: _DemoPainter(state),
         child: const SizedBox.expand(),
+      ),
+    );
+    // 原始指標事件模式下由 Flutter 判斷手勢；語意手勢模式沒有指標事件進來，這層不會觸發。
+    return LayoutBuilder(
+      builder: (context, constraints) => GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => state.apply(_message('tap')),
+        onDoubleTap: () => state.apply(_message('doubleTap')),
+        onLongPress: () => state.apply(_message('longPress')),
+        onScaleStart: (details) {
+          if (details.pointerCount >= 2) {
+            state.apply(_message('pinch', {'phase': 'start'}));
+          }
+        },
+        onScaleUpdate: (details) {
+          if (details.pointerCount >= 2) {
+            state.apply(_message('pinch', {'phase': 'update', 'scale': details.scale}));
+          }
+          else {
+            state.apply(_message('pan', {
+              'phase': 'update',
+              'dx': constraints.maxWidth > 0 ? details.focalPointDelta.dx / constraints.maxWidth : 0,
+              'dy': constraints.maxHeight > 0 ? details.focalPointDelta.dy / constraints.maxHeight : 0,
+            }));
+          }
+        },
+        child: canvas,
       ),
     );
   }

@@ -66,3 +66,15 @@ AqutterNative(
 pnpm install && pnpm typecheck
 flutter pub get && flutter test
 ```
+
+## 輸入的兩種接法
+
+網頁的 `<aqutter-native>` 用 `input` 屬性決定回傳什麼：
+
+| `input` | 網頁送什麼 | 誰判斷手勢 |
+|---|---|---|
+| `gestures`（預設） | 判斷好的 tap／doubleTap／longPress／pan／pinch | 網頁 |
+| `pointers` | 原始指標事件（down／move／up／cancel，附時間戳） | Flutter（標準的 `GestureDetector`） |
+| `both` | 兩者都送 | 兩邊都判斷，通常用不到 |
+
+本範例兩種都支援。用 `pointers` 時，Flutter 的 `onTap` 在同時註冊 `onDoubleTap` 的情況下會等約 300 ms 確認不是雙擊才觸發，這是 Flutter 的標準行為。
