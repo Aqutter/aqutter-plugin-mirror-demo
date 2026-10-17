@@ -31,7 +31,7 @@ const { x, y, radius } = await mirrorDemo.state()
 | `pan` | 拖動圓 |
 | `pinch` | 縮放圓 |
 | `tap` | 計數 +1（並派送 `count` 事件） |
-| `doubleTap` | 計數歸零（與單擊互斥：雙擊不會再多算一次單擊，單擊因此晚約 130 ms 才計數） |
+| `doubleTap` | 計數歸零（與單擊互斥：雙擊不會再多算一次單擊，單擊因此晚約 270 ms 才計數） |
 | `longPress` | 換色 |
 | `command` `reset` | 回到初始狀態 |
 
