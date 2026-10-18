@@ -34,6 +34,11 @@ class MirrorDemoPlugin extends AqutterPlugin {
   Map<String, AqutterPluginHandler> get handlers => {
         // 網頁也能用一般 plugin 方法讀目前狀態（鏡像是另一條通道，互不影響）
         'state': (payload) async => state.toJson(),
+        // 壓力測試：整個畫面每一幀都在變（像全螢幕影片），看鏡像管線在最壞情況下的表現
+        'animate': (payload) async {
+          state.setAnimating(payload['on'] == true);
+          return {'animating': state.animating};
+        },
       };
 
   @override
@@ -79,6 +84,32 @@ class MirrorDemoState extends ChangeNotifier {
   double _rotationAtScaleStart = 0;
 
   void Function(int count)? onCountChanged;
+
+  /// 全螢幕動畫模式（像影片：每一幀整個畫面都在變），壓力測試用。
+  bool animating = false;
+
+  /// 動畫模式下目前的時間（秒）。
+  double timeSeconds = 0;
+
+  void setAnimating(bool on) {
+    if (animating == on) {
+      return;
+    }
+    animating = on;
+    if (on) {
+      SchedulerBinding.instance.scheduleFrameCallback(_animationFrame);
+    }
+    notifyListeners();
+  }
+
+  void _animationFrame(Duration timeStamp) {
+    if (!animating) {
+      return;
+    }
+    timeSeconds = timeStamp.inMicroseconds / Duration.microsecondsPerSecond;
+    notifyListeners();
+    SchedulerBinding.instance.scheduleFrameCallback(_animationFrame);
+  }
 
   Color get color => palette[colorIndex % palette.length];
 
@@ -264,6 +295,10 @@ class _DemoPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (state.animating) {
+      _paintVideoLike(canvas, size);
+      return;
+    }
     canvas.drawRect(Offset.zero & size, Paint()..color = const Color(0xFF14141C));
     final grid = Paint()
       ..color = const Color(0x22FFFFFF)
@@ -289,6 +324,26 @@ class _DemoPainter extends CustomPainter {
       textDirection: TextDirection.ltr,
     )..layout();
     text.paint(canvas, center - Offset(text.width / 2, text.height / 2));
+  }
+
+  /// 像影片的內容：滿版的色塊網格，每個格子的顏色隨時間連續變化，再加幾個移動的圓。每一幀每個像素幾乎都不同。
+  void _paintVideoLike(Canvas canvas, Size size) {
+    final t = state.timeSeconds;
+    const columns = 48;
+    final cell = size.width / columns;
+    final paint = Paint();
+    for (var row = 0; row * cell < size.height; row++) {
+      for (var column = 0; column < columns; column++) {
+        final hue = (math.sin(column * 0.31 + t * 2.1) + math.cos(row * 0.27 - t * 1.7) + 2) / 4 * 360;
+        paint.color = HSVColor.fromAHSV(1, hue % 360, 0.75, 0.55 + 0.35 * math.sin(t * 3 + row * 0.2 + column * 0.1)).toColor();
+        canvas.drawRect(Rect.fromLTWH(column * cell, row * cell, cell + 0.5, cell + 0.5), paint);
+      }
+    }
+    for (var i = 0; i < 4; i++) {
+      final angle = t * (0.8 + i * 0.35) + i * 1.7;
+      final center = Offset(size.width * (0.5 + 0.38 * math.cos(angle)), size.height * (0.5 + 0.38 * math.sin(angle * 1.3)));
+      canvas.drawCircle(center, size.shortestSide * 0.12, Paint()..color = Colors.white.withValues(alpha: 0.85));
+    }
   }
 
   @override
