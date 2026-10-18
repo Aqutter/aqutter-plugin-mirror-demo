@@ -16,17 +16,14 @@ import 'package:flutter/scheduler.dart';
 ///   - `longPress`：換色　`command` `reset`：回到初始狀態
 ///
 /// 鏡像的對象換成 `google_maps_flutter` 的 `GoogleMap` 也是同一套寫法，見 README。
-/// 以 `--dart-define=AQUTTER_MIRROR_FPS=240` 覆蓋鏡像的目標幀率（量測用）；沒給（0）就用建構子的 [MirrorDemoPlugin.fps]。
-const int _fpsOverride = int.fromEnvironment('AQUTTER_MIRROR_FPS');
-
 class MirrorDemoPlugin extends AqutterPlugin {
-  MirrorDemoPlugin({this.fps = 60, this.adaptive = AqutterNativeAdaptive.resolution});
+  MirrorDemoPlugin({this.quality, this.maxFps});
 
-  /// 鏡像的目標幀率。
-  final int fps;
+  /// 移動中的解析度政策；`null`（預設）是 `auto`（Flutter 自己畫的內容擷取很快，夠快就維持完整解析度）。
+  final AqutterNativeQuality? quality;
 
-  /// 擷取跟不上時的策略；範例預設「降解析度、停下來補定格幀」。
-  final AqutterNativeAdaptive adaptive;
+  /// 選填的擷取頻率硬上限；`null`（預設）不限制。
+  final int? maxFps;
 
   final MirrorDemoState state = MirrorDemoState();
 
@@ -56,8 +53,8 @@ class MirrorDemoPlugin extends AqutterPlugin {
     return Positioned.fill(
       child: AqutterNative(
         sessionId: 'mirror-demo',
-        fps: _fpsOverride > 0 ? _fpsOverride : fps,
-        adaptive: adaptive,
+        quality: quality,
+        maxFps: maxFps,
         matchViewportAspect: true,
         injectPointers: true, // 網頁 input="pointers" 時，由下面的 GestureDetector 自己判斷手勢
         onMessage: state.apply,
