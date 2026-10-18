@@ -16,6 +16,9 @@ import 'package:flutter/scheduler.dart';
 ///   - `longPress`：換色　`command` `reset`：回到初始狀態
 ///
 /// 鏡像的對象換成 `google_maps_flutter` 的 `GoogleMap` 也是同一套寫法，見 README。
+/// 以 `--dart-define=AQUTTER_MIRROR_FPS=240` 覆蓋鏡像的目標幀率（量測用）；沒給（0）就用建構子的 [MirrorDemoPlugin.fps]。
+const int _fpsOverride = int.fromEnvironment('AQUTTER_MIRROR_FPS');
+
 class MirrorDemoPlugin extends AqutterPlugin {
   MirrorDemoPlugin({this.fps = 60, this.adaptive = AqutterNativeAdaptive.resolution});
 
@@ -34,6 +37,8 @@ class MirrorDemoPlugin extends AqutterPlugin {
   Map<String, AqutterPluginHandler> get handlers => {
         // 網頁也能用一般 plugin 方法讀目前狀態（鏡像是另一條通道，互不影響）
         'state': (payload) async => state.toJson(),
+        // 除錯：連線與已送出的幀數（`seq`）
+        'diag': (payload) async => AqutterNativeHost.instance.diagnostics('mirror-demo'),
         // 壓力測試：整個畫面每一幀都在變（像全螢幕影片），看鏡像管線在最壞情況下的表現
         'animate': (payload) async {
           state.setAnimating(payload['on'] == true);
@@ -51,7 +56,7 @@ class MirrorDemoPlugin extends AqutterPlugin {
     return Positioned.fill(
       child: AqutterNative(
         sessionId: 'mirror-demo',
-        fps: fps,
+        fps: _fpsOverride > 0 ? _fpsOverride : fps,
         adaptive: adaptive,
         matchViewportAspect: true,
         injectPointers: true, // 網頁 input="pointers" 時，由下面的 GestureDetector 自己判斷手勢
