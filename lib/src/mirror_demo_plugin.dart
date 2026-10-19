@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:aqutter/aqutter.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter/scheduler.dart';
 
 /// native view 鏡像範例：一個純 Flutter 的互動畫面（圓、計數、色票），墊在 WebView 之下，
@@ -316,12 +316,12 @@ class _DemoPainter extends CustomPainter {
     canvas.drawCircle(
       center + Offset(math.cos(state.rotation), math.sin(state.rotation)) * radius * 0.8,
       radius * 0.09,
-      Paint()..color = Colors.white,
+      Paint()..color = const Color(0xFFFFFFFF),
     );
     final text = TextPainter(
       text: TextSpan(
         text: '${state.count}',
-        style: TextStyle(color: Colors.white, fontSize: radius, fontWeight: FontWeight.bold),
+        style: TextStyle(color: const Color(0xFFFFFFFF), fontSize: radius, fontWeight: FontWeight.bold),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
@@ -344,7 +344,7 @@ class _DemoPainter extends CustomPainter {
     for (var i = 0; i < 4; i++) {
       final angle = t * (0.8 + i * 0.35) + i * 1.7;
       final center = Offset(size.width * (0.5 + 0.38 * math.cos(angle)), size.height * (0.5 + 0.38 * math.sin(angle * 1.3)));
-      canvas.drawCircle(center, size.shortestSide * 0.12, Paint()..color = Colors.white.withValues(alpha: 0.85));
+      canvas.drawCircle(center, size.shortestSide * 0.12, Paint()..color = const Color(0xFFFFFFFF).withValues(alpha: 0.85));
     }
   }
 
